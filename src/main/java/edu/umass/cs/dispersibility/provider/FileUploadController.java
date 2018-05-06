@@ -1,31 +1,27 @@
 package edu.umass.cs.dispersibility.provider;
 
 
-import edu.umass.cs.dispersibility.provider.storage.StorageFileNotFoundException;
-import edu.umass.cs.dispersibility.provider.storage.StorageService;
+import edu.umass.cs.dispersibility.provider.db.AppDao;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
+import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.stream.Collectors;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * @author Sarthak Nandi on 30/4/18.
@@ -33,12 +29,8 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 @Controller
 public class FileUploadController {
 
-  private final StorageService storageService;
-
   @Autowired
-  public FileUploadController(StorageService storageService) {
-    this.storageService = storageService;
-  }
+  private AppDao appDao;
 
   @GetMapping("/")
   public String homePage() {
@@ -48,39 +40,29 @@ public class FileUploadController {
   /**
    * POST /uploadFile -> receive and locally save a file.
    *
-   * @param uploadfile The uploaded file as Multipart file parameter in the
+   * @param uploadFile The uploaded file as Multipart file parameter in the
    * HTTP request. The RequestParam name must be the same of the attribute
    * "name" in the input tag with type file.
-   *
    * @return An http OK status in case of success, an http 4xx status in case
    * of errors.
    */
   @PostMapping(value = "/upload")
   @ResponseBody
-  public ResponseEntity<?> uploadFile(@RequestParam("jar-file") MultipartFile uploadfile,
+  public ResponseEntity<?> uploadFile(@RequestParam("jar-file") MultipartFile uploadFile,
                                       @RequestParam("service") String service,
                                       @RequestParam("app-class") String appClassName) {
 
     System.out.println("Service: " + service);
     System.out.println("App class name: " + appClassName);
 
-    String filename = uploadfile.getOriginalFilename();
+    String filename = uploadFile.getOriginalFilename();
 
     try {
-      // Get the filename and build the local file path
+      ByteBuffer jar = ByteBuffer.wrap(uploadFile.getBytes());
+      appDao.insertApp(service, appClassName, filename, jar);
 
-//      String directory = env.getProperty("netgloo.paths.uploadedFiles");
-      String directory = "/home/sarthak/IdeaProjects/DispersibilityProvider/upload-dir";
-      String filepath = Paths.get(directory, filename).toString();
-
-      // Save the file locally
-      BufferedOutputStream stream =
-          new BufferedOutputStream(new FileOutputStream(new File(filepath)));
-      stream.write(uploadfile.getBytes());
-      stream.close();
-    }
-    catch (Exception e) {
-      System.out.println(e.getMessage());
+    } catch (IOException e) {
+      e.printStackTrace();
       return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
 
@@ -99,29 +81,35 @@ public class FileUploadController {
 //    return "uploadForm";
 //  }
 
-  @GetMapping("/files/{filename:.+}")
+  @GetMapping("/files/{service}")
   @ResponseBody
-  public ResponseEntity<Resource> serveFile(@PathVariable String filename) {
-
-    Resource file = storageService.loadAsResource(filename);
-    return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-                                      "attachment; filename=\"" + file.getFilename() + "\"").body(file);
+  public ResponseEntity<Resource> serveFile(@PathVariable String service) {
+    return appDao.getByServiceName(service)
+        .map(app -> createFileResource(app.getJarFileName(), app.getJar()))
+        .map(file -> ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
+                                                "attachment; filename=\"" + file.getFilename()
+                                                + "\"").body(file))
+        .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
-  @PostMapping("/")
-  public String handleFileUpload(@RequestParam("file") MultipartFile file,
-                                 RedirectAttributes redirectAttributes) {
+  private Resource createFileResource(String fileName, ByteBuffer content) {
+    try {
+      // Get the filename and build the local file path
 
-    storageService.store(file);
-    redirectAttributes.addFlashAttribute("message",
-                                         "You successfully uploaded " + file.getOriginalFilename() + "!");
+//      String directory = env.getProperty("netgloo.paths.uploadedFiles");
+      String directory = "/home/sarthak/IdeaProjects/DispersibilityProvider/upload-dir";
+      Path file = Paths.get(directory, fileName);
+      String filePath = file.toString();
 
-    return "redirect:/";
+      // Save the file locally
+      BufferedOutputStream stream =
+          new BufferedOutputStream(new FileOutputStream(new File(filePath)));
+      stream.write(content.array());
+      stream.close();
+
+      return new UrlResource(file.toUri());
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
-
-  @ExceptionHandler(StorageFileNotFoundException.class)
-  public ResponseEntity<?> handleStorageFileNotFound(StorageFileNotFoundException e) {
-    return ResponseEntity.notFound().build();
-  }
-
 }
