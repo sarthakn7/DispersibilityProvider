@@ -55,30 +55,16 @@ public class FileUploadController {
    * @return An http OK status in case of success, an http 4xx status in case
    * of errors.
    */
-  @PostMapping(value = "/uploadFile")
+  @PostMapping(value = "/upload")
   @ResponseBody
-  public ResponseEntity<?> uploadFile(@RequestParam("uploadfile") MultipartFile uploadfile,
+  public ResponseEntity<?> uploadFile(@RequestParam("jar-file") MultipartFile uploadfile,
                                       @RequestParam("service") String service,
-                                      @RequestParam("type") String fileType) {
+                                      @RequestParam("app-class") String appClassName) {
 
     System.out.println("Service: " + service);
+    System.out.println("App class name: " + appClassName);
 
     String filename = uploadfile.getOriginalFilename();
-
-    switch (fileType) {
-      case "app" : break;
-      case "request" : break;
-      case "other" : break;
-      default: return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
-    }
-
-    if ("app".equals(fileType)) {
-
-    } else if ("request".equals(fileType)) {
-
-    } else if ("other".equals(fileType)) {
-
-    }
 
     try {
       // Get the filename and build the local file path

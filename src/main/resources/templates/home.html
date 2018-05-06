@@ -11,26 +11,28 @@
 
   <!-- Javascript functions -->
   <script>
-    var additionalFiles = 0;
+    function uploadData() {
+      var service = document.getElementById("service-name-input").value;
+      var appClassName = document.getElementById("app-class-name-input").value;
 
-    // bind the on-change event for the input element (triggered when a file
-    // is chosen)
-    // $(document).ready(function() {
-    //   $("#upload-file-input").on("change", test);
-    // });
+      if (service === undefined || service === null || service === "") {
+        alert("Please enter a service name");
+        return;
+      }
+      if (appClassName === undefined || appClassName === null || appClassName === "") {
+        alert("Please enter the name of class of the application");
+        return;
+      }
 
-    /**
-     * Upload the file sending it via Ajax at the Spring Boot server.
-     */
-    function uploadFile(id, service) {
-      console.log("Calling upload file");
+      console.log("Uploading data");
 
       var formData = new FormData();
-      formData.append("service", service)
-      formData.append('uploadfile', document.getElementById(id).files[0]);
+      formData.append("service", service);
+      formData.append("app-class", appClassName);
+      formData.append('jar-file', document.getElementById("app-jar-file").files[0]);
 
       $.ajax({
-        url: "/uploadFile",
+        url: "/upload",
         type: "POST",
         data: formData,
         enctype: 'multipart/form-data',
@@ -49,50 +51,13 @@
       });
     }
 
-    function uploadData() {
-      var service = document.getElementById("service-name-input").value;
-
-      if (service === undefined || service === null || service === "") {
-        alert("Please enter a service name");
-        return;
-      }
-
-      console.log(document.getElementById("app-class-file").files[1])
-
-      uploadFile("app-class-file", service);
-    }
-
-    function addFileUploadRow() {
-      var label = document.createElement("label");
-      label.for = "additional-file-" + additionalFiles;
-      label.innerHTML = "Add file: ";
-      var input = document.createElement("input");
-      input.id = "additional-file-" + additionalFiles;
-      input.type = "file";
-      input.accept = "*";
-      additionalFiles += 1;
-
-      // var td1 = row.insertCell(0);
-      var td1 = document.createElement("td");
-      td1.appendChild(label);
-
-      // var td2 = row.insertCell(1);
-      var td2 = document.createElement("td");
-      td2.appendChild(input);
-
-      var tr = document.createElement("tr");
-      tr.appendChild(td1);
-      tr.appendChild(td2);
-
-      document.getElementById("form-table").appendChild(tr);
-    }
   </script>
 
   <div>Welcome! Please enter the following information to disperse your web application:</div>
   <br/>
 
   <!-- Upload file form -->
-  <!--<form id="upload-file-form">-->
+  <form id="upload-file-form">
 
     <table id="form-table" border="1">
       <tr>
@@ -102,20 +67,20 @@
         </td>
       </tr>
       <tr>
-        <td><label for="app-class-file">Application class file: </label></td>
-        <td><input id="app-class-file" type="file" accept="*" /></td>
+        <td><label for="app-class-name-input">Name of app class: </label></td>
+        <td>
+          <input id="app-class-name-input" type="text"/>
+        </td>
       </tr>
       <tr>
-        <td><label for="request-class-file">Request class file: </label></td>
-        <td><input id="request-class-file" type="file" accept="*" /></td>
+        <td><label for="app-jar-file">Application jar file: </label></td>
+        <td><input id="app-jar-file" type="file" accept="*" /></td>
       </tr>
     </table>
-
-    <p><button onclick="addFileUploadRow()">Add more files</button></p>
 
     <p><button onclick="uploadData()">Submit</button></p>
     <br />
     <span id="upload-file-message"></span>
-  <!--</form>-->
+  </form>
 </body>
 </html>
