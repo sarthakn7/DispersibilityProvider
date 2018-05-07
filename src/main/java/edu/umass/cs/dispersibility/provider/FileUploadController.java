@@ -2,16 +2,11 @@ package edu.umass.cs.dispersibility.provider;
 
 
 import edu.umass.cs.dispersibility.provider.db.AppDao;
-import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
-import org.springframework.core.io.UrlResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -69,47 +64,16 @@ public class FileUploadController {
     return new ResponseEntity<>(HttpStatus.OK);
   }
 
-//  @GetMapping("/")
-//  public String listUploadedFiles(Model model) {
-//
-//    model.addAttribute("files", storageService.loadAll()
-//        .map(path -> MvcUriComponentsBuilder
-//            .fromMethodName(FileUploadController.class, "serveFile",
-//                            path.getFileName().toString()).build().toString())
-//        .collect(Collectors.toList()));
-//
-//    return "uploadForm";
-//  }
-
   @GetMapping("/files/{service}")
   @ResponseBody
   public ResponseEntity<Resource> serveFile(@PathVariable String service) {
     return appDao.getByServiceName(service)
-        .map(app -> createFileResource(app.getJarFileName(), app.getJar()))
-        .map(file -> ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
-                                                "attachment; filename=\"" + file.getFilename()
-                                                + "\"").body(file))
+        .map(app -> {
+          Resource file = new ByteArrayResource(app.getJar().array());
+          String fileHeader = "attachment; filename=\"" + app.getJarFileName() + "\"";
+          return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION, fileHeader).body(file);
+        })
         .orElseGet(() -> ResponseEntity.badRequest().build());
   }
 
-  private Resource createFileResource(String fileName, ByteBuffer content) {
-    try {
-      // Get the filename and build the local file path
-
-//      String directory = env.getProperty("netgloo.paths.uploadedFiles");
-      String directory = "/home/sarthak/IdeaProjects/DispersibilityProvider/upload-dir";
-      Path file = Paths.get(directory, fileName);
-      String filePath = file.toString();
-
-      // Save the file locally
-      BufferedOutputStream stream =
-          new BufferedOutputStream(new FileOutputStream(new File(filePath)));
-      stream.write(content.array());
-      stream.close();
-
-      return new UrlResource(file.toUri());
-    } catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-  }
 }
