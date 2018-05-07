@@ -8,3 +8,8 @@ cassandra:
   host: 127.0.0.1
   port: 9042
   keyspace: dispersibility
+
+
+create-service:
+  jar-path: create-service-jar/create-service.jar
+  properties-path: create-service-jar/dispersible.properties

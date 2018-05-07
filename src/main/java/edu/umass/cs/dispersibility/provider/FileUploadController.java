@@ -26,6 +26,8 @@ public class FileUploadController {
 
   @Autowired
   private AppDao appDao;
+  @Autowired
+  private DispersibleServiceCreator dispersibleServiceCreator;
 
   @GetMapping("/")
   public String homePage() {
@@ -45,7 +47,8 @@ public class FileUploadController {
   @ResponseBody
   public ResponseEntity<?> uploadFile(@RequestParam("jar-file") MultipartFile uploadFile,
                                       @RequestParam("service") String service,
-                                      @RequestParam("app-class") String appClassName) {
+                                      @RequestParam("app-class") String appClassName,
+                                      @RequestParam("initial-state") String initialState) {
 
     System.out.println("Service: " + service);
     System.out.println("App class name: " + appClassName);
@@ -55,6 +58,12 @@ public class FileUploadController {
     try {
       ByteBuffer jar = ByteBuffer.wrap(uploadFile.getBytes());
       appDao.insertApp(service, appClassName, filename, jar);
+
+      boolean created = dispersibleServiceCreator.createService(service, initialState);
+
+      if (!created) {
+        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      }
 
     } catch (IOException e) {
       e.printStackTrace();
