@@ -1,56 +1,38 @@
 <!DOCTYPE html>
-<html lang="en">
+<html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
   <meta charset="UTF-8">
   <title>Disperse Your Web App</title>
 
-  <!-- JQuery import -->
-  <script src="//code.jquery.com/jquery-1.11.2.min.js"></script>
 </head>
 <body>
 
   <!-- Javascript functions -->
   <script>
-    function uploadData() {
+    function validate() {
       var service = document.getElementById("service-name-input").value.trim();
       var appClassName = document.getElementById("app-class-name-input").value.trim();
       var initialState = document.getElementById("initial-state-input").value.trim();
+      var file = document.getElementById("app-jar-file").value.trim();
 
       if (service === undefined || service === null || service === "") {
         alert("Please enter a service name");
-        return;
+        return false;
       }
       if (appClassName === undefined || appClassName === null || appClassName === "") {
         alert("Please enter the name of class of the application");
-        return;
+        return false;
+      }
+      if (initialState === undefined || initialState === null || initialState === "") {
+        alert("Please enter the initial state");
+        return false;
+      }
+      if (file === undefined || file === null || file === "") {
+        alert("Please select the jar file");
+        return false;
       }
 
-      console.log("Uploading data");
-
-      var formData = new FormData();
-      formData.append("service", service);
-      formData.append("app-class", appClassName);
-      formData.append("initial-state", initialState);
-      formData.append('jar-file', document.getElementById("app-jar-file").files[0]);
-
-      $.ajax({
-        url: "/upload",
-        type: "POST",
-        data: formData,
-        enctype: 'multipart/form-data',
-        processData: false,
-        contentType: false,
-        cache: false,
-        success: function () {
-          // Handle upload success
-          $("#upload-file-message").text("File successfully uploaded");
-        },
-        error: function () {
-          // Handle upload error
-          $("#upload-file-message").text(
-              "File not uploaded (perhaps it's too much big)");
-        }
-      });
+      return true;
     }
 
   </script>
@@ -59,36 +41,36 @@
   <br/>
 
   <!-- Upload file form -->
-  <form id="upload-file-form">
+  <form id="upload-file-form" action="/upload" method="post" enctype="multipart/form-data" onsubmit="return validate()">
 
     <table id="form-table" border="1">
       <tr>
         <td><label for="service-name-input">Name of service: </label></td>
         <td>
-          <input id="service-name-input" type="text"/>
+          <input id="service-name-input" type="text" name="service"/>
         </td>
       </tr>
       <tr>
         <td><label for="initial-state-input">Initial state: </label></td>
         <td>
-          <input id="initial-state-input" type="text"/>
+          <input id="initial-state-input" type="text" name="initial-state"/>
         </td>
       </tr>
       <tr>
         <td><label for="app-class-name-input">Name of app class with complete package: </label></td>
         <td>
-          <input id="app-class-name-input" type="text"/>
+          <input id="app-class-name-input" type="text" name="app-class"/>
         </td>
       </tr>
       <tr>
         <td><label for="app-jar-file">Application jar file: </label></td>
-        <td><input id="app-jar-file" type="file" accept="*" /></td>
+        <td><input id="app-jar-file" type="file" accept="*" name="jar-file"/></td>
       </tr>
     </table>
 
-    <p><button onclick="uploadData()">Submit</button></p>
+    <p><input type="submit" value="Submit"/></p>
     <br />
-    <span id="upload-file-message"></span>
+    <span id="upload-file-message" th:text="${message}"></span>
   </form>
 </body>
 </html>

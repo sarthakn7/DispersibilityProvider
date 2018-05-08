@@ -8,7 +8,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,6 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 /**
  * @author Sarthak Nandi on 30/4/18.
@@ -30,8 +30,13 @@ public class FileUploadController {
   private DispersibleServiceCreator dispersibleServiceCreator;
 
   @GetMapping("/")
-  public String homePage() {
+  public String index() {
     return "home";
+  }
+
+  @GetMapping("/uploaded")
+  public String uploaded() {
+    return "uploaded";
   }
 
   /**
@@ -44,16 +49,17 @@ public class FileUploadController {
    * of errors.
    */
   @PostMapping(value = "/upload")
-  @ResponseBody
-  public ResponseEntity<?> uploadFile(@RequestParam("jar-file") MultipartFile uploadFile,
-                                      @RequestParam("service") String service,
-                                      @RequestParam("app-class") String appClassName,
-                                      @RequestParam("initial-state") String initialState) {
+  public String uploadFile(@RequestParam("jar-file") MultipartFile uploadFile,
+                                 @RequestParam("service") String service,
+                                 @RequestParam("app-class") String appClassName,
+                                 @RequestParam("initial-state") String initialState,
+                                 RedirectAttributes redirectAttributes) {
     service = service.trim();
     appClassName = appClassName.trim();
 
     System.out.println("Service: " + service);
     System.out.println("App class name: " + appClassName);
+    System.out.println("Initial state: " + initialState);
 
     String filename = uploadFile.getOriginalFilename();
 
@@ -63,16 +69,15 @@ public class FileUploadController {
 
       boolean created = dispersibleServiceCreator.createService(service, initialState);
 
-      if (!created) {
-        return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
+      if (created) {
+        return "redirect:/uploaded";
       }
 
     } catch (IOException e) {
       e.printStackTrace();
-      return new ResponseEntity<>(HttpStatus.BAD_REQUEST);
     }
-
-    return new ResponseEntity<>(HttpStatus.OK);
+    redirectAttributes.addFlashAttribute("message", "Upload failed");
+    return "redirect:/";
   }
 
   @GetMapping("/files/{service}")
