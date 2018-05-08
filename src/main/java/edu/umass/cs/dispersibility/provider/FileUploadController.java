@@ -49,6 +49,8 @@ public class FileUploadController {
                                       @RequestParam("service") String service,
                                       @RequestParam("app-class") String appClassName,
                                       @RequestParam("initial-state") String initialState) {
+    service = service.trim();
+    appClassName = appClassName.trim();
 
     System.out.println("Service: " + service);
     System.out.println("App class name: " + appClassName);

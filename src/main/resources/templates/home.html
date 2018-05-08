@@ -12,9 +12,9 @@
   <!-- Javascript functions -->
   <script>
     function uploadData() {
-      var service = document.getElementById("service-name-input").value;
-      var appClassName = document.getElementById("app-class-name-input").value;
-      var initialState = document.getElementById("initial-state-input").value;
+      var service = document.getElementById("service-name-input").value.trim();
+      var appClassName = document.getElementById("app-class-name-input").value.trim();
+      var initialState = document.getElementById("initial-state-input").value.trim();
 
       if (service === undefined || service === null || service === "") {
         alert("Please enter a service name");
@@ -75,7 +75,7 @@
         </td>
       </tr>
       <tr>
-        <td><label for="app-class-name-input">Name of app class: </label></td>
+        <td><label for="app-class-name-input">Name of app class with complete package: </label></td>
         <td>
           <input id="app-class-name-input" type="text"/>
         </td>
