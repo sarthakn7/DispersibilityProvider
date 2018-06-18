@@ -13,3 +13,9 @@ cassandra:
 create-service:
   jar-path: create-service-jar/create-service.jar
   properties-path: create-service-jar/dispersible.properties
+  keystore-pass: qwerty
+  keystore-path: /home/sarthak/IdeaProjects/gigapaxos-s7/conf/keyStore.jks
+  truststore-pass: qwerty
+  truststore-path: /home/sarthak/IdeaProjects/gigapaxos-s7/conf/trustStore.jks
+  logging-config: /home/sarthak/IdeaProjects/gigapaxos-s7/conf/logging.properties
+  log4j-config: /home/sarthak/IdeaProjects/gigapaxos-s7/conf/log4j.properties

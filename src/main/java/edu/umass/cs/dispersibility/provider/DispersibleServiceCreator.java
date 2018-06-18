@@ -1,7 +1,6 @@
 package edu.umass.cs.dispersibility.provider;
 
 import java.io.IOException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -11,30 +10,26 @@ import org.springframework.stereotype.Service;
 @Service
 public class DispersibleServiceCreator {
 
-  private final String jarPath;
-  private final String propertiesPath;
+  @Value("${create-service.jar-path}")
+  private String jarPath;
+  @Value("${create-service.properties-path}")
+  private String propertiesPath;
+  @Value("${create-service.keystore-pass}")
+  private String keystorePassword;
+  @Value("${create-service.keystore-path}")
+  private String keystorePath;
+  @Value("${create-service.truststore-pass}")
+  private String trustStorePassword;
+  @Value("${create-service.truststore-path}")
+  private String trustStorePath;
+  @Value("${create-service.logging-config}")
+  private String loggingConfigFilePath;
+  @Value("${create-service.log4j-config}")
+  private String log4jConfigFilePath;
 
-  @Autowired
-  public DispersibleServiceCreator(@Value("${create-service.jar-path}") String jarPath,
-                                   @Value("${create-service.properties-path}") String propertiesPath) {
-    this.jarPath = jarPath;
-    this.propertiesPath = propertiesPath;
-  }
 
   public boolean createService(String service, String initialState) {
-    ProcessBuilder pb = new ProcessBuilder("java",
-                                           "-jar",
-                                           "-Djavax.net.ssl.keyStorePassword=qwerty",
-                                           "-Djavax.net.ssl.keyStore=/home/sarthak/IdeaProjects/gigapaxos-s7/conf/keyStore.jks",
-                                           "-Djavax.net.ssl.trustStorePassword=qwerty",
-                                           "-Djavax.net.ssl.trustStore=/home/sarthak/IdeaProjects/gigapaxos-s7/conf/trustStore.jks",
-                                           "-ea",
-                                           "-Djava.util.logging.config.file=/home/sarthak/IdeaProjects/gigapaxos-s7/conf/logging.properties",
-                                           "-Dlog4j.configuration=/home/sarthak/IdeaProjects/gigapaxos-s7/conf/log4j.properties",
-                                           "-DgigapaxosConfig=" + propertiesPath,
-                                           jarPath,
-                                           service,
-                                           initialState);
+    ProcessBuilder pb = new ProcessBuilder(getProcessParameters(service, initialState));
     pb.inheritIO();
 
     try {
@@ -49,5 +44,21 @@ public class DispersibleServiceCreator {
     }
 
     return false;
+  }
+
+  private String[] getProcessParameters(String service, String initialState) {
+    return new String[]{"java",
+                        "-jar",
+                        "-Djavax.net.ssl.keyStorePassword=" + keystorePassword,
+                        "-Djavax.net.ssl.keyStore=" + keystorePath,
+                        "-Djavax.net.ssl.trustStorePassword=" + trustStorePath,
+                        "-Djavax.net.ssl.trustStore=" + trustStorePath,
+                        "-ea",
+                        "-Djava.util.logging.config.file=" + loggingConfigFilePath,
+                        "-Dlog4j.configuration=" + log4jConfigFilePath,
+                        "-DgigapaxosConfig=" + propertiesPath,
+                        jarPath,
+                        service,
+                        initialState};
   }
 }
